@@ -1,0 +1,9 @@
+name: MFA_Shiny
+account: michellefyhuang
+server: shinyapps.io
+appId: 141805
+bundleId: 633981
+url: https://michellefyhuang.shinyapps.io/MFA_Shiny/
+when: 1480711082.65931
+asMultiple: FALSE
+asStatic: FALSE

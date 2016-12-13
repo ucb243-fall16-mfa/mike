@@ -1,0 +1,165 @@
+---
+title: "Introduction to the package MFA"
+author: "Michelle Huang and Kara Yang"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r echo=FALSE}
+library(MFA)
+```
+We will use the dataset 'mtcars' to demostrate the usages of 'MFA' package.
+
+## GSVD:
+The GSVD generalizes the SVD of a matrix by incorporating two additional positive definite matrices that represent"constraints"to be incorporated in the decomposition.
+
+GSVD is a function that performs Generalized Singular Value Decomposition.
+
+Output includes:
+
+d - Vector line with the singular values of the result(from largest to smallest)
+
+u - Line eigenvectors
+
+v - Column relative eigenvectors
+
+##### Here is how to get Generalized Singular Value Decomposition of a matrix:
+```{r}
+GSVD(Data=mtcars)
+```
+
+## MFA:
+The general idea behind MFA is to normalize each of the individual data sets so that their first principal component has the same length and then to combine these data tables into a common representation of the observations sometimes called the compromise, or the consensus. This compromise is obtained from a (non-normalized) PCA of the grand table obtained from the concatenation of the normalized data tables. This PCA decomposes the variance of the compromise into a set of new orthogonal variables ordered by the amount of variance
+that each component explains. The coordinates of the observations on the components are called factor scores and these can be used to plot maps of the observationsin which the observations are represented as points such that the distances in the map best reflect the similarities between the observations. The positions of the observations 'as seen by' each data set are called partial factor scores and can be also represented as points in the compromise map. The average of the factor scores of all the tables gives back the factor score of the compromise.
+
+Output includes:
+
+Dimension - Number of the components
+
+Sets - Number of the sets
+
+M - masses for the rows
+
+A - squared singular value derived weights for the k tables
+
+PLin - Vector with weights for lines
+
+PCol - Vector with weights for columns
+
+MatrixA  - Matrix with eigenvalues (Variances)
+
+MatrixU  - Matrix U of the SVD of Matrix Z
+
+MatrixV  - Matriz V of the SVD of Natrix Z
+
+MatrixF  - Compromise Factor Score Matrix
+
+MatrixEFG - Partial Factor Score Matrix
+
+MatrixCCP - Matrix with Correlation of Principal Components with Groups
+
+MatrixEscVar - Matrix of Partial Inertia
+
+##### Here is how to create a basic 'mfa' object:
+```{r}
+mfa(data=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps = 2, center = TRUE, scale = TRUE)
+```
+
+##### Here is how to plot a 'mfa' object:
+```{r}
+plot(MFA=mfa(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11)),labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"),dim1=1,dim2=2)
+```
+
+##### Here is how to plot for compromised factor scores:
+```{r}
+plot_factorscore(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11),dim1=1,dim2=2,
+                 labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"))
+
+```
+
+##### Here is how to plot for partial factor scores and variable loadings:
+```{r}
+plot_partialfs(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11),dim1=1,dim2=2,
+               labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"))
+
+```
+
+##### Here is how to print summary of eigen values:
+```{r}
+mt.mfa<-mfa(data=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps = NULL, center = TRUE, scale = TRUE)
+summary(mt.mfa,ncomps=2)
+```
+
+## Bootstrap:
+We use bootstrap to estimate the stability of the compromise factor scores. 
+The main idea is to use center of gravity which indicate that th compromise factor scores are the average of the partial factor scores. Therefore, we can obtain bootstrap confidence intervals(CIs)by repeatedly sampling with replacement from the set of tables and compute new compromise factor scores.
+
+##### Here is how to perform bootstrap for partial factor scores:
+```{r}
+bootstrap(dataset=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps=NULL, center=TRUE, scale=TRUE, k=10,B=100)
+```
+
+##### Here is how to plot for 'bootstrap' object:
+```{r}
+plot(bootstrap(dataset=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps=2, center=TRUE, scale=TRUE, k=10,B=100))
+```
+
+## Lg coefficient:
+The Lg coefficient reflects the MFA normalization and takes positive values.An eigen-decomposition of the K by K between-table of Rv or Lg coefficients can provide factor scores for the tables.
+
+##### Here is how to get Lg coefficient between two tables:
+```{r}
+mfa1=mfa(data=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps = NULL, center = TRUE, scale = TRUE)
+table_1<-mfa1$MatrixZ[,1:3]
+table_2<-mfa1$MatrixZ[,4:6]
+Lg(MFA=mfa1,table1=table_1,table2=table_2,order1=1,order2=2)
+```
+
+##### Here is how to get Lg coefficient across all the tables:
+```{r}
+Lg_table(mtcars,sets=list(1:3,4:6,7:8,9:11),center=TRUE,scale=TRUE)
+```
+
+## Rv coefficient:
+The Rv coefficient varies between 0 and 1 and relects the amount of variance shared by two matrices.
+
+##### Here is how to get RV coefficient between two tables:
+```{r}
+mfa1=mfa(data=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps = NULL, center = TRUE, scale = TRUE)
+table_1<-mfa1$MatrixZ[,1:3]
+table_2<-mfa1$MatrixZ[,4:6]
+RV(table1=table_1,table2=table_2,center=TRUE,scale=TRUE)
+```
+
+##### Here is how to get RV coefficient between multiple tables:
+```{r}
+RV_table(mtcars,sets=list(1:3,4:6,7:8,9:11),center=TRUE,scale=TRUE)
+```
+
+## Contributions:
+The contribution of a table reflects the proportion of the variance of a dimension that can be attributed to this table.The larger the contribution of a table to a component,the more important this table is for this component.
+
+###### contr 1: Contribution of an observation to a dimension
+Contributions take values between 0 and 1, and for a given component, the sum of the contributions of all observations is equal to 1. 
+The larger a contribution, the more the observation contributes to the component.
+
+###### contr 2: Contribution of a variable to a dimension
+Variable contributions take values between 0 and 1, and for a given component, the contributions of all variables sum to 1. The larger 
+a contribution of a variable to a component the more this variable contributes to this component. 
+
+###### contr 3: Contribution of a table to a dimension
+Table contributions take values between 0 and 1, and for a given component,the contributions of all tables sum to 1. The larger a contribution
+of a table to a component,the more this table contributes to this component.
+
+##### Here is how to get contributions:
+```{r}
+contr1 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=1)
+contr1
+contr2 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=2)
+contr2
+contr3 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=3)
+contr3
+```

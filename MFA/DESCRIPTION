@@ -1,0 +1,25 @@
+Package: MFA
+Type: Package
+Title: Multiple factor analysis
+Version: 0.1.0
+Authors: Michelle Huang, Shuhui Huang, Kara Yang, Michael Xie
+Maintainer: Michelle Huang <michellefyhuang@berkeley.edu>, Shuhui Huang <hij1356@berkeley.edu>, Kara Yang <xykara@gmail.com>, Michael Xie <xiehx1992@gmail.com>
+Description: A brief description of MFA functionalities
+License: BSD 2.0
+Encoding: UTF-8
+LazyData: TRUE
+RoxygenNote: 5.0.1
+Collate:
+  GSVD.R
+  MFA.R
+  summary.R
+  Lg_table.R
+  Lg.R
+  Rv_table.R
+  Rv.R
+  bootstrap.R
+  contributions.R
+  plot.R
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

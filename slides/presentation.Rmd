@@ -1,0 +1,205 @@
+---
+title: "Multiple Factor Analysis"
+author: "Shuhui Huang, Michelle Huang, Michael Xie, Kara Yang"
+date: "December 2016"
+output: ioslides_presentation
+widescreen: true
+
+---
+
+## Introduction{.larger}
+Multiple factor analysis, known as MFA, is an extension of principal component analysis(PCA) designed to handle several data tables that measure sets of variables collected on the same observations, or multiple data tables where the same variables are measured on different sets of observations
+
+MFA consists of two steps:  
+
+* Compute PCA for each data table with normalize each data table
+  
+* Combine all of the normalized tables and perform PCA to get factor scores and loadings
+
+## Dataset
+In this presentation, we will use the wine dataset, which consists of a (fictitious) wine tasting experiment. The data contains 12 different wines made from Sauvignon Blanc grapes coming from three regions (4 wines from each region): New Zealand, France, and Canada. Ten expert assessors were asked:  
+
+- to evaluate the wines on 9-point rating scales, using the following four variables as standard for the evaluation: cat-pee, passion-fruit, green pepper, and mineral.  
+
+- to add some variables should they felt the need: some assessors choose none, some choose one or two more variables.
+
+```{r,include=FALSE}
+library(MFA)
+wine=read.csv("https://raw.githubusercontent.com/ucb-stat243/stat243-fall-2016/master/problem-sets/final-project/data/wines.csv")[,-1]
+sets=list(1:6,7:12,13:18,19:23,24:29,30:34,35:38,39:44,45:49,50:53)
+```
+
+## MFA Package{.larger}
+* Our MFA package includes a print method, a plot method, summaries of eigenvalues, a method for contribution, a method for Rv coefficient and a bootstrap.  
+* In addition, we also create a Shiny App which can:  
+1. Plot eigenvalues, common factor scores, partial factor scores and loadings 
+2. Compute the values for the  summary of outputs, compromise factor scores, partial factor scores, contributions
+3. Provide a summary of the dataset
+4. Allow users to set different inputs and choose a specific output
+
+## MFA Function{.larger}
+* mfa function demostrates basic functionalities of multiple factor analysis
+* mfa function requires the following arguments:  
+1. data: dataset  
+2. sets: list of vectors indicating the sets of variables  
+3. ncomps: integer, how many number of components  
+4. center: logical argument, whether to center  
+5. scale: logical argument, whether to scale  
+
+## MFA Function{.smaller}
+* mfa function returns these outputs:
+1. Dimension: Number of the components
+2. Sets: Number of the sets
+3. M: masses for the rows
+4. A: squared singular value derived weights for the k tables
+5. PLin: Vector with weights for lines
+6. PCol: Vector with weights for columns
+7. MatrixA: Matrix with eigenvalues (Variances)
+8. MatrixU: Matrix U of the SVD of Matrix Z
+9. MatrixV: Matriz V of the SVD of Natrix Z
+10. MatrixF: Compromise Factor Score Matrix
+11. MatrixEFG: Partial Factor Score Matrix
+12. MatrixCCP: Matrix with Correlation of Principal Components with Groups 
+13. MatrixEscVar: Matrix of Partial Inertia
+
+## Print Method
+* The print method requires these arguments:
+1. mfa: object
+2. ... : further arguments ignored
+ 
+* The print method will return basic information of the 'mfa' object such as:
+
+1. class   
+2. dimension    
+3. number of the sets  
+4. row mass    
+5. table weight 
+
+## Plot Method
+Plot method returns plots for the selected axes of both the factor scores and partial factor scores
+
+Both of theses two plots take the same arguments:  
+
+1. data: the dataset  
+2. sets: list of vectors indicating the sets of variables  
+3. center: logical argument, whether to center or not     
+4. scale: logical arugment, whether to scale    
+5. dim1: integer, selected dimension to plot on x-axis    
+6. dim2: integer, selected dimension to plot on y-axis   
+7. labels: label for each row
+
+## Plot For Factor Score Example
+```{r}
+plot_factorscore(wine,sets,center=TRUE,scale=TRUE,dim1=1,dim2=2,
+labels=c("NZ1","NZ2","NZ3","NZ4","FR1","FR2","FR3","FR4","CA1","CA2","CA3","CA4"))
+```
+
+## Plot For Partial Factor Score Example
+```{r}
+plot_partialfs(wine,sets,center=TRUE,scale=TRUE,dim1=1,dim2=2,
+labels=c("NZ1","NZ2","NZ3","NZ4","FR1","FR2","FR3","FR4","CA1","CA2","CA3","CA4"))
+```
+
+## Summary of Eigenvalues
+"summary" is a function which takes MFA(an "mfa" object) and ncomps(the number of eigenvalues) as argument and returns:
+* singular values
+* eigenvalues and cumulative eigenvalues
+* inertia and cumulative inertia
+```{r}
+mfa1=mfa(wine,sets, ncomps = NULL, center = TRUE, scale = TRUE)
+summary(mfa1,ncomps = 2)
+```
+
+## Contribution
+* The contribution of a table reflects the proportion of the variance of a dimension that can be attributed to this table.
+* The larger the contribution of a table to a component,the more important this table is for this component.  
+* Contributions is a function which takes the following argument:  
+
+1. X: the raw matrix need to be dealt with  
+2. sets: list of vectors indicating the sets of variables (i.e. the blocks)  
+3. type: 1, 2 or 3, contribution of an observation to a dimension  
+
+* Contributions function returns the contribution of required type
+
+## Contribution Example{.smaller}
+```{r}
+head(contributions(wine,sets,type=1))
+```
+
+## $R_{v}$ Coefficient{.smaller}
+* The Rv coefficient relects the amount of variance shared by two matrices
+* The Rv varies between 0 and 1  
+* The formula of $R_{v}$ coefficient is:
+
+$R_{Vk,k'}=\frac{trace\{\big(X_{[k]}X_{[k]}^T\big)\times\big(X_{[k']}X_{[k']}^T\big)\}}{\sqrt{trace\{\big(X_{[k]}X_{[k]}^T\big)\times\big(X_{[k]}X_{[k]}^T\big)\}\times trace\{\big(X_{[k']}X_{[k']}^T\big)\times \big(X_{[k']}X_{[k']}^T\big) \}}}$
+
+* Rv function requires arguments:  
+
+1. table1: matrix of the first table  
+2. table2: matrix of the second table  
+3. center: logical argument, whether to center  
+4. scale: logical argument, whether to scale  
+
+* Rv function returns $R_{v}$ coefficients of the two tables
+
+## $R_{v}$ Coefficient
+Rv_table function requires:    
+
+1. dataset: dataset  
+2. sets: the list of table  
+3. center: logical argument, whether to center  
+4. scale: logical argument, whether to scale  
+
+* Rv_tables function returns the $R_{v}$ coefficient matrix
+```{r}
+mfa1=mfa(wine,sets, ncomps = NULL, center = TRUE, scale = TRUE)
+table_1<-mfa1$MatrixZ[,1:3]
+table_2<-mfa1$MatrixZ[,4:6]
+RV(table1=table_1,table2=table_2,center=TRUE,scale=TRUE)
+```
+
+## $L_{g}$ Coefficient {.larger}
+* The $L_{g}$ coefficient reflects the MFA normalization and takes positive values
+* Factor scores for the table can be acquired by an eigen-decomposition of the K by K between-table of $R_{v}$ or $L_{g}$ coefficients
+* The formula of $L_{g}$ coefficient is:  
+$L_{g(k,k')}=trace\big\{\big(X_{[k]}X_{[k]}^T\big)\times\big(X_{[k']}X_{[k']}^T\big)\big\}\times (\alpha_{k} \times \alpha_{k'})$
+ 
+
+## $L_{g}$ Coefficient {.smaller}
+* Lg function requires the following arguments:  
+
+1. MFA: a "mfa" object  
+2. table1: matrix of the first table  
+3. table2: matrix of the second table  
+4. order1: the number of table1 in order  
+5. order2: the number of table2 in order   
+* Lg function returns the $L_{g}$ coefficient of the two tables 
+```{r}
+mfa1=mfa(wine,sets, ncomps = NULL, center = TRUE, scale = TRUE)
+table_1<-mfa1$MatrixZ[,1:3]
+table_2<-mfa1$MatrixZ[,4:6]
+Lg(MFA=mfa1,table_1,table_2,order1=1,order2=2)
+```
+
+## Bootstrap {.smaller}
+* Bootstrap is used to estimate the stability of the compromise factor scores
+* The main idea that the compromise factor scores are the average of the partial factor scores
+* The bootstrap confidence intervals can be obtained by repeatedly sampling with replacement from the set of tables and computing new compromise factor scores
+* Bootstrap function requires these arguments:  
+
+1. dataset: data set  
+2. sets: list of vectors indicating the sets of variables  
+3. ncomps: integer, how many number of components  
+4. center: logical argument, whether to center  
+5. scale: logical arugment, whether to scale  
+6. k: integer, size of sampling for each bootstrap variable  
+7. B: integer, size of bootstrap sampling  
+
+* Bootstrap function will return: mean, variance, ratio, size and dimension of the bootstrap
+
+## Bootstrap Example{.smaller}
+```{r}
+bootstrap(wine,sets, ncomps=1, center=TRUE, scale=TRUE, k=10,B=100)
+```
+
+## Thank you! {.larger}
